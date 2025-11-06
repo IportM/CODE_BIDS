@@ -1,0 +1,20 @@
+#Dossier a Ignorer
+/DATA
+/BIDS
+/.vscode
+/scr/Allen
+/scr/Header_Nico
+/scr/QSM_EMELINE
+/scr/TEMPLATE_premier_jet
+
+#Fichiers a Ignorer
+/scr/Align_same.sh
+/scr/Builde_header.sh
+/scr/copie.sh
+/scr/correction_header.sh
+/scr/Find_Matrice_Same.sh
+/scr/Mask_MP2RAGE.py
+/scr/rare_library.tsv
+/scr/results.tsv
+/scr/Template_MP2RGE.sh
+
