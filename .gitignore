@@ -12,9 +12,10 @@
 /scr/Builde_header.sh
 /scr/copie.sh
 /scr/correction_header.sh
-/scr/Find_Matrice_Same.sh
+/scr/Find_Matrice_same.sh
 /scr/Mask_MP2RAGE.py
 /scr/rare_library.tsv
 /scr/results.tsv
-/scr/Template_MP2RGE.sh
-
+/scr/Template_MP2RAGE.sh
+/scr/Angio.py
+/scr/Template.sh
