@@ -1,5 +1,5 @@
 Bienvenue dans la documentation de CODE_BIDS
-===========================================
+============================================
 
 Ce dépôt rassemble des scripts d'automatisation pour préparer des données de neuro-imagerie
 selon la spécification BIDS. Les modules principaux sont écrits en Python et sont complétés
@@ -12,7 +12,7 @@ code.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Sommaire
 
    getting_started
-   modules/index
+   modules/brain_extraction
+   modules/participants

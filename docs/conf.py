@@ -20,7 +20,7 @@ autosectionlabel_prefix_document = True
 
 # Modules lourds ou optionnels ignorés pendant la génération de la documentation
 autodoc_mock_imports = ['ants', 'antspynet']
-
+master_doc = 'index'
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 

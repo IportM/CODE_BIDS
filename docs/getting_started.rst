@@ -1,5 +1,5 @@
 Prise en main
-============
+=============
 
 Installation des dépendances
 ----------------------------
