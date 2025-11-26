@@ -125,7 +125,7 @@ find "$BRAIN_DIR" \
       -t "$MAT_AFFN" \
       -t "$MAT_RIGID"
 
-    # rm -f "$hdr_img"
+     rm -f "$hdr_img"
     echo "  ✓ (T2starmap) $OUT_FILE"
   else
     # Traitement standard

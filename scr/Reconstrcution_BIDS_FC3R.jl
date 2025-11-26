@@ -866,8 +866,8 @@ println("🕒 Temps Template $(local_elapsed) seconds")
 global_elapsed = time() - global_start  # Total reconstruction time
 println("Total reconstruction time: $(global_elapsed) seconds")
 
-
-
+run(`./apply_to_template.sh QSM`)
+run(`./Make_Template.sh QSM`)
 # python_script = "Brkraw_RARE.py"
 # command = `python3 $python_script /home/mpetit/Dev/CODE_Mat/Data/2024_RECH_FC3R/S01/20250409_110852_FC3R_M04_PR_s02_FC3R_M04_PR_s02_1_1/ 12 ./temp "sub04_ses02_angio1.nii.gz"`
 # run(command)

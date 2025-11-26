@@ -17,7 +17,7 @@ else
 fi
 
 # Dossier racine de sortie
-OUTPUT_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template"
+OUTPUT_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template/Allen"
 
 # === LOOP THROUGH ALL FILES (only top-level, no subfolders) ===
 for map_file in "$DATA_DIR"/*.nii.gz; do
@@ -84,7 +84,7 @@ for map_file in "$DATA_DIR"/*.nii.gz; do
     -r "$TEMPLATE" \
     -t "$warp" \
     -t "$affine" \
-    --interpolation NearestNeighbor
+    --interpolation BSpline[3]
 
   echo "✅ Saved to $output_file"
 done
