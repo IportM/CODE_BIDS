@@ -10,7 +10,7 @@ fi
 MODALITY="$1"
 
 # === CONFIGURATION ===
-INPUT_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template/Allen"
+INPUT_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template/SyN_Allen"
 
 # pattern de recherche : sensible à la modalité
 PATTERN="*${MODALITY}*.nii.gz"

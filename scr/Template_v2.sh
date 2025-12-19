@@ -29,8 +29,8 @@ esac
 echo "→ Sessions sélectionnées : ${ses_filter[*]}"
 
 # Répertoires de base
-ORIG_IMG_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${contrast}/aligned"
-TEMPLATE_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${contrast}/${session_group}/template"
+ORIG_IMG_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${contrast}/alignedSyN_Allen"
+TEMPLATE_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${contrast}/${session_group}/templateSyN_Allen"
 
 # ➤ Vérification si le template final (résolution 0.1) existe déjà
 FINAL_TEMPLATE="${TEMPLATE_BASE}/0.1/template/${contrast}_template_template0.nii.gz"
@@ -128,6 +128,7 @@ for res in "${resolutions[@]}"; do
     -w 1
     -n 0
     -r 1
+    -z "/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/scr/Allen/LR/100_AMBA_ref.nii.gz"
   )
 
   # ajouter les paramètres Q/F/S s'ils existent (non vides)
@@ -154,7 +155,17 @@ for res in "${resolutions[@]}"; do
     echo "❌ Template non trouvé après la génération. Abandon."
     exit 1
   fi
+  ALLEN_REF="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/scr/Allen/LR/100_AMBA_ref.nii.gz"  # ou ton Allen template 100µm
 
+  # if [[ "$res" == "0.1" ]]; then
+  #   echo "→ Rééchantillonnage du template final sur la grille Allen (114x132x80)..."
+  #   antsApplyTransforms \
+  #     -d 3 \
+  #     -i "$NEW_TEMPLATE" \
+  #     -r "$ALLEN_REF" \
+  #     -n Linear \
+  #     -o "${TEMPLATE_OUT}/${contrast}_template_template0_inAllenGrid.nii.gz"
+  # fi
   REF_TEMPLATE="$NEW_TEMPLATE"
 done
 

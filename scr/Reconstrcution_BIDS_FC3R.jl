@@ -832,8 +832,13 @@ local_elapsed = time() - local_start
 println("🕒 Temps mask angio $(local_elapsed) seconds")
 
 local_start = time()
-run(`./Allign.sh`)
-run(`./Find_Matrice.sh`) #chnager l'image dereference dans le script et le chnager dans tous les script qui suit
+# version d'avant double registration
+# run(`./Allign.sh`)
+# run(`./Find_Matrice.sh`) #chnager l'image dereference dans le script et le chnager dans tous les script qui suit
+
+# nouvelel version avec SyN
+run(`./Find_Matrice_SyN.sh`)
+run(`./Align_SyN.sh`)
 local_elapsed = time() - local_start
 println("🕒 Temps Alignement $(local_elapsed) seconds")
 
@@ -868,6 +873,3 @@ println("Total reconstruction time: $(global_elapsed) seconds")
 
 run(`./apply_to_template.sh QSM`)
 run(`./Make_Template.sh QSM`)
-# python_script = "Brkraw_RARE.py"
-# command = `python3 $python_script /home/mpetit/Dev/CODE_Mat/Data/2024_RECH_FC3R/S01/20250409_110852_FC3R_M04_PR_s02_FC3R_M04_PR_s02_1_1/ 12 ./temp "sub04_ses02_angio1.nii.gz"`
-# run(command)

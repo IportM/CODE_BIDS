@@ -11,13 +11,13 @@ MODALITY="$1"
 
 # Dossier d'entrée : cas particulier pour T2starmap
 if [ "$MODALITY" == "T2starmap" ]; then
-  DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/T2starmap/aligned/seuil"
+  DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/T2starmap/alignedSyN_Allen/seuil"
 else
-  DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/aligned"
+  DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/alignedSyN_Allen"
 fi
 
 # Dossier racine de sortie
-OUTPUT_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template/Allen"
+OUTPUT_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template/SyN_Allen"
 
 # === LOOP THROUGH ALL FILES (only top-level, no subfolders) ===
 for map_file in "$DATA_DIR"/*.nii.gz; do
@@ -52,8 +52,8 @@ for map_file in "$DATA_DIR"/*.nii.gz; do
   fi
 
   # === CONFIGURATION dépendante du groupe ===
-  TEMPLATE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/${group}/template/0.1/template/RARE_template_template0.nii.gz"
-  TRANSFORM_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/${group}/template/0.1/template"
+  TEMPLATE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/${group}/templateSyN_Allen/0.1/template/RARE_template_template0.nii.gz"
+  TRANSFORM_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/${group}/templateSyN_Allen/0.1/template"
 
   # Créer le bon dossier de sortie
   OUTPUT_DIR="${OUTPUT_BASE}/${group}"
