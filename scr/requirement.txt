@@ -1,0 +1,6 @@
+# Core dependencies for MRI preprocessing & ROI extraction
+antspyx
+antspynet
+nibabel
+numpy
+brkraw

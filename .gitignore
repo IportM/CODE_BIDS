@@ -6,6 +6,7 @@
 /scr/Header_Nico
 /scr/QSM_EMELINE
 /scr/TEMPLATE_premier_jet
+/scr/.venv*
 
 #Fichiers a Ignorer
 /scr/Align_same.sh
