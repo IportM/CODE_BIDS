@@ -20,3 +20,4 @@
 /scr/Angio.py
 /scr/Template.sh
 *.nii.gz
+.DS_Store
