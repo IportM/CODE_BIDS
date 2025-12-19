@@ -999,7 +999,7 @@ function main()
     run_angio_mask()
 
     # 11) Alignment + templates (RARE + all modalities incl. QSM)
-    run_alignment_and_templates()
+    #run_alignment_and_templates()
 
     println("Total reconstruction time: $(time() - global_start) seconds")
 end
