@@ -6,7 +6,7 @@ set -euo pipefail
 # - installs micromamba locally
 # - creates a local env with python + ANTs + MRtrix3 + Julia
 # - pip installs requirements.txt
-# - julia --project=./src instantiate + precompile (+ PyCall build)
+# - julia --project=./scr instantiate + precompile (+ PyCall build)
 # - runs check_deps.sh at the end
 # ------------------------------------------------------------
 
@@ -18,7 +18,7 @@ MAMBA_BIN="$MAMBA_DIR/micromamba"
 MAMBA_ROOT="$MAMBA_DIR/root"          # micromamba root prefix
 ENV_DIR="$PROJECT_ROOT/.env_fc3r"     # conda env path (local)
 
-SRC_JULIA_ENV="$PROJECT_ROOT/src"     # <-- your Project.toml + Manifest.toml live here
+scr_JULIA_ENV="$PROJECT_ROOT/scr"     # <-- your Project.toml + Manifest.toml live here
 
 # You can override these if you want
 PY_VER="${PY_VER:-3.11}"
@@ -107,18 +107,18 @@ echo "== Installing Python deps (requirements.txt) =="
 "$ENV_PIP" install -r "$PROJECT_ROOT/requirements.txt"
 
 # -------------------------
-# 4) Julia deps (Project/Manifest in ./src)
+# 4) Julia deps (Project/Manifest in ./scr)
 # -------------------------
-if [[ ! -f "$SRC_JULIA_ENV/Project.toml" ]]; then
-  echo "❌ Missing src/Project.toml (expected at $SRC_JULIA_ENV/Project.toml)"
+if [[ ! -f "$scr_JULIA_ENV/Project.toml" ]]; then
+  echo "❌ Missing scr/Project.toml (expected at $scr_JULIA_ENV/Project.toml)"
   exit 1
 fi
 
-echo "== Instantiating Julia environment in ./src =="
+echo "== Instantiating Julia environment in ./scr =="
 # Ensure PyCall uses the env python
 export PYTHON="$ENV_PY"
 
-"$ENV_JULIA" --project="$SRC_JULIA_ENV" -e '
+"$ENV_JULIA" --project="$scr_JULIA_ENV" -e '
 using Pkg;
 # Force PyCall to use the same python as the env
 ENV["PYTHON"] = get(ENV, "PYTHON", "python3");
@@ -134,7 +134,7 @@ Pkg.precompile();
 # Optional: if your custom Julia package is in the repo, develop it (only if present)
 if [[ -d "$PROJECT_ROOT/SEQ_BRUKER_a_MP2RAGE_CS_360" ]]; then
   echo "== Developing local Julia package: SEQ_BRUKER_a_MP2RAGE_CS_360 =="
-  "$ENV_JULIA" --project="$SRC_JULIA_ENV" -e "using Pkg; Pkg.develop(path=\"$PROJECT_ROOT/SEQ_BRUKER_a_MP2RAGE_CS_360\"); Pkg.precompile();"
+  "$ENV_JULIA" --project="$scr_JULIA_ENV" -e "using Pkg; Pkg.develop(path=\"$PROJECT_ROOT/SEQ_BRUKER_a_MP2RAGE_CS_360\"); Pkg.precompile();"
 fi
 
 # Optional: MESE project
@@ -163,7 +163,7 @@ if grep -q -- "--julia-project" "$PROJECT_ROOT/check_deps.sh" 2>/dev/null; then
   bash "$PROJECT_ROOT/check_deps.sh" \
     --python "$ENV_PY" \
     --julia "$ENV_JULIA" \
-    --julia-project "$SRC_JULIA_ENV"
+    --julia-project "$scr_JULIA_ENV"
 else
   # Otherwise, run it as-is (it should rely on PATH / default julia)
   bash "$PROJECT_ROOT/check_deps.sh"
@@ -174,4 +174,4 @@ echo
 echo "To use the environment later:"
 echo "  eval \"\$($MAMBA_BIN shell hook -s bash)\""
 echo "  micromamba activate \"$ENV_DIR\""
-echo "  julia --project=./src ./src/Reconstrcution_BIDS_FC3R.jl"
+echo "  julia --project=./scr ./scr/Reconstrcution_BIDS_FC3R.jl"
