@@ -971,6 +971,9 @@ function main()
     # 5) Reconstruction per method (MP2RAGE / MESE / RARE)
     reconstruct_all_sequences(df, rare_lib)
 
+    #5.1 OPTIONAL IF SOME REONCSTRUCTION NOT IN THE SAME ORIENTATION
+    run(`./Reorient_if_bug.sh`)
+
     # 6) Brain extraction (Python)
     brain_extraction_script = step_path("03_masks", "brain_extraction.py")
     run(`$(FC3R_CONFIG[:python_bin]) $brain_extraction_script -r $bids`)
