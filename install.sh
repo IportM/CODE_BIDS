@@ -71,8 +71,12 @@ else
   echo "== Environment already exists: $ENV_DIR =="
 fi
 
+# Some conda activate hooks (Julia) can break under "set -u" (nounset).
+# Disable nounset only for activation.
+set +u
+export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-}"
 micromamba activate "$ENV_DIR"
-
+set -u
 ENV_PY="$ENV_DIR/bin/python"
 ENV_JULIA="$ENV_DIR/bin/julia"
 ENV_PIP="$ENV_DIR/bin/pip"
