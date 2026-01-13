@@ -9,8 +9,13 @@ set -euo pipefail
 # - julia --project=./scr instantiate + precompile (+ PyCall build)
 # - runs check_deps.sh at the end
 # ------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ "$(basename "$SCRIPT_DIR")" == "scr" ]]; then
+  PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+  PROJECT_ROOT="$SCRIPT_DIR"
+fi
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TOOLS_DIR="$PROJECT_ROOT/tools"
 MAMBA_DIR="$TOOLS_DIR/micromamba"
@@ -74,7 +79,10 @@ fi
 # Some conda activate hooks (Julia) can break under "set -u" (nounset).
 # Disable nounset only for activation.
 set +u
-export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-}"
+JULIA_DEPOT_LOCAL="$PROJECT_ROOT/.julia_depot"
+mkdir -p "$JULIA_DEPOT_LOCAL"
+# NOTE: trailing ":" keeps Julia default depots in addition to the local one
+export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-$JULIA_DEPOT_LOCAL:}"
 micromamba activate "$ENV_DIR"
 set -u
 ENV_PY="$ENV_DIR/bin/python"

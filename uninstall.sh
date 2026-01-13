@@ -10,7 +10,7 @@ set -euo pipefail
 
 # Detect project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ "$(basename "$SCRIPT_DIR") == "scr" ]]; then
+if [[ "$(basename "$SCRIPT_DIR")" == "scr" ]]; then
   PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 else
   PROJECT_ROOT="$SCRIPT_DIR"
@@ -38,10 +38,6 @@ Optional:
   --with-julia        Also remove $TOOLS_DIR/julia and $TOOLS_DIR/julia-*
   --with-julia-cache  Also remove ~/.julia/compiled and ~/.julia/logs (safe cache cleanup)
   --yes               Do not ask for confirmation
-
-Notes:
-  - This script does NOT remove your data in BIDS/ or derivatives/.
-  - It does NOT delete ~/.julia entirely (unless you do it manually).
 EOF
 }
 
@@ -63,15 +59,18 @@ targets=()
 [[ -d "$ENV_DIR" ]] && targets+=("$ENV_DIR")
 [[ -d "$MAMBA_DIR" ]] && targets+=("$MAMBA_DIR")
 
-if [[ $REMOVE_JULIA -eq 1 ]]; then
+if (( REMOVE_JULIA == 1 )); then
   [[ -e "$TOOLS_DIR/julia" ]] && targets+=("$TOOLS_DIR/julia")
-  # Add all julia-* folders inside tools/
   if [[ -d "$TOOLS_DIR" ]]; then
-    while IFS= read -r -d '' p; do targets+=("$p"); done < <(find "$TOOLS_DIR" -maxdepth 1 -type d -name "julia-*" -print0 2>/dev/null || true)
+    # Add all julia-* folders inside tools/
+    while IFS= read -r -d '' p; do
+      targets+=("$p")
+    done < <(find "$TOOLS_DIR" -maxdepth 1 -type d -name "julia-*" -print0 2>/dev/null || true)
   fi
 fi
 
-if [[ ${#targets[@]} -eq 0 && $REMOVE_JULIA_CACHE -eq 0 ]]; then
+# If nothing to remove, exit
+if (( ${#targets[@]} == 0 )) && (( REMOVE_JULIA_CACHE == 0 )); then
   echo "Nothing to remove. (No env/tools found)"
   exit 0
 fi
@@ -80,14 +79,13 @@ echo "This will remove:"
 for t in "${targets[@]}"; do
   echo "  - $t"
 done
-
-if [[ $REMOVE_JULIA_CACHE -eq 1 ]]; then
+if (( REMOVE_JULIA_CACHE == 1 )); then
   echo "  - ~/.julia/compiled"
   echo "  - ~/.julia/logs"
 fi
 
 echo
-if [[ $ASSUME_YES -ne 1 ]]; then
+if (( ASSUME_YES == 0 )); then
   read -r -p "Proceed? [y/N] " ans
   case "${ans,,}" in
     y|yes) ;;
@@ -95,11 +93,19 @@ if [[ $ASSUME_YES -ne 1 ]]; then
   esac
 fi
 
-# Try to deactivate env if micromamba exists
+# Best-effort micromamba deactivate (avoid failing under nounset)
 if [[ -x "$MAMBA_BIN" ]]; then
   export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-$MAMBA_DIR/root}"
+
+  set +e
+  set +u
+  export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-}"
+
   eval "$("$MAMBA_BIN" shell hook -s bash)" >/dev/null 2>&1 || true
   micromamba deactivate >/dev/null 2>&1 || true
+
+  set -u
+  set -e
 fi
 
 # Remove targets
@@ -111,13 +117,10 @@ for t in "${targets[@]}"; do
 done
 
 # Optional Julia cache cleanup
-if [[ $REMOVE_JULIA_CACHE -eq 1 ]]; then
+if (( REMOVE_JULIA_CACHE == 1 )); then
   echo "Removing Julia cache (compiled/logs)..."
   rm -rf "$HOME/.julia/compiled" "$HOME/.julia/logs" 2>/dev/null || true
 fi
 
 echo
 echo "✅ Uninstall completed."
-echo "Remaining (not touched):"
-echo "  - $PROJECT_ROOT/BIDS (your data)"
-echo "  - $HOME/.julia (packages store)  [unless you used --with-julia-cache for partial cleanup]"
