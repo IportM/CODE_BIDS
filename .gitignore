@@ -7,6 +7,8 @@
 /scr/QSM_EMELINE
 /scr/TEMPLATE_premier_jet
 /scr/.venv*
+/tools
+
 
 #Fichiers a Ignorer
 /scr/Align_same.sh
@@ -22,3 +24,6 @@
 /scr/Template.sh
 *.nii.gz
 .DS_Store
+.env_fc3r
+.env_fc3r/bin
+

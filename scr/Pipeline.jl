@@ -43,6 +43,7 @@ const FC3R_CONFIG = Dict(
     :project_root => dirname(@__DIR__),
 
     # Python executable to use for most neuroimaging scripts
+    # You can use the ./install.sh to crete an venv with everything needed
     :python_bin => "/workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/python3",
 
     # Brkraw executable

@@ -1,0 +1,23 @@
+## FC3R pipeline
+
+### 1) Prérequis système (à installer manuellement)
+- ANTs (antsRegistrationSyN.sh, antsApplyTransforms, ImageMath, AverageImages, ...)
+- MRtrix3 (mrinfo, mrconvert, mrtransform, mrgrid, mrcat)
+- brkraw
+- Julia
+- Python 3
+
+### 2) Installer Python deps
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+### 3) Installer Julia deps (IMPORTANT)
+julia --project=./src -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+
+### 4) Vérifier que tout est OK
+./check_deps.sh 
+
+### 5) Lancer
+source .venv/bin/activate
+julia --project=./src ./src/Pipeline.jl
