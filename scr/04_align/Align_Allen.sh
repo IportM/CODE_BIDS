@@ -6,14 +6,24 @@ set -euo pipefail
 # ─────────────────────────────────────────────
 # 📂 Chemins à adapter si besoin
 # ─────────────────────────────────────────────
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-BRAIN_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted"
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
+
+BRAIN_DIR="$BRAIN_EXTRACTED_DIR"
 
 # 🔹 Même template Allen que dans ton script RARE→Allen
 ALLEN_TEMPLATE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/scr/Allen/LR/100_AMBA_ref.nii.gz"
 
 # 🔹 Dossier où antsRegistrationSyN.sh a mis les transforms RARE→Allen
-TRANSFORM_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/matrice_transformsSyN_Allen"
+TRANSFORM_DIR="$BRAIN_EXTRACTED_DIR/RARE/matrice_transformsSyN_Allen"
 
 # ─────────────────────────────────────────────
 

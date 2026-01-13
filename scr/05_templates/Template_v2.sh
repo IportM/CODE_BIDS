@@ -28,9 +28,20 @@ esac
 
 echo "→ Sessions sélectionnées : ${ses_filter[*]}"
 
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
+
 # Répertoires de base
-ORIG_IMG_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${contrast}/alignedSyN_Allen"
-TEMPLATE_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${contrast}/${session_group}/templateSyN_Allen"
+ORIG_IMG_DIR="$BRAIN_EXTRACTED_DIR/${contrast}/alignedSyn"
+TEMPLATE_BASE="$BRAIN_EXTRACTED_DIR/${contrast}/${session_group}/templateSyN"
 
 # ➤ Vérification si le template final (résolution 0.1) existe déjà
 FINAL_TEMPLATE="${TEMPLATE_BASE}/0.1/template/${contrast}_template_template0.nii.gz"
@@ -128,7 +139,6 @@ for res in "${resolutions[@]}"; do
     -w 1
     -n 0
     -r 1
-    -z "/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/scr/Allen/LR/100_AMBA_ref.nii.gz"
   )
 
   # ajouter les paramètres Q/F/S s'ils existent (non vides)

@@ -6,13 +6,24 @@ source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 
 set -euo pipefail
 
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
+
 # ← ← ← À modifier ici avec vos chemins bruts → → →
-BRAIN_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted"
+BRAIN_DIR="$BRAIN_EXTRACTED_DIR"
 # REF_IMG="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/sub-01_ses-1_RARE_brain_extracted.nii.gz"
-REF_IMG_SES_1_2="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/sub-01_ses-1_RARE_brain_extracted.nii.gz"
-REF_IMG_SES_3_4="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/sub-01_ses-3_RARE_brain_extracted.nii.gz"
+REF_IMG_SES_1_2="$BRAIN_EXTRACTED_DIR/RARE/sub-01_ses-1_RARE_brain_extracted.nii.gz"
+REF_IMG_SES_3_4="$BRAIN_EXTRACTED_DIR/RARE/sub-01_ses-3_RARE_brain_extracted.nii.gz"
 # REF_IMG_SES_5_6="/path/to/sub-01_ses-5_RARE_brain_extracted.nii.gz"
-TRANSFORM_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/matrice_transforms"
+TRANSFORM_DIR="$BRAIN_EXTRACTED_DIR/RARE/matrice_transforms"
 # ← ← ← fin des chemins à configurer → → →
 
 # Vérifications

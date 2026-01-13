@@ -9,8 +9,19 @@ fi
 
 MODALITY="$1"
 
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
+
 # === CONFIGURATION ===
-INPUT_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template/SyN_Allen"
+INPUT_DIR="$BRAIN_EXTRACTED_DIR/${MODALITY}/To_Template/SyN"
 
 # pattern de recherche : sensible à la modalité
 PATTERN="*${MODALITY}*.nii.gz"

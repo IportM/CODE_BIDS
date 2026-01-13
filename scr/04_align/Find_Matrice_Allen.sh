@@ -5,9 +5,19 @@ set -euo pipefail
 # ─────────────────────────────────────────────
 # 📂 Dossiers / fichiers d'entrée
 # ─────────────────────────────────────────────
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
 
 # Dossier contenant les cerveaux RARE des souris
-DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE"
+DATA_DIR="$BRAIN_EXTRACTED_DIR/RARE"
 
 # 🔹 Template Allen (EN ESPACE / RÉSOLUTION COMPATIBLE AVEC TES RARE)
 # → À ADAPTER avec ton vrai chemin !

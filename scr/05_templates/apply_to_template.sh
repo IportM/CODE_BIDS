@@ -7,17 +7,28 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
+
 MODALITY="$1"
 
 # Dossier d'entrée : cas particulier pour T2starmap
 if [ "$MODALITY" == "T2starmap" ]; then
-  DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/T2starmap/alignedSyN_Allen/seuil"
+  DATA_DIR="$BRAIN_EXTRACTED_DIR/T2starmap/alignedSyN_Allen/seuil"
 else
-  DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/alignedSyN_Allen"
+  DATA_DIR="$BRAIN_EXTRACTED_DIR/${MODALITY}/alignedSyN_Allen"
 fi
 
 # Dossier racine de sortie
-OUTPUT_BASE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/${MODALITY}/To_Template/SyN_Allen"
+OUTPUT_BASE="$BRAIN_EXTRACTED_DIR/${MODALITY}/To_Template/SyN_Allen"
 
 # === LOOP THROUGH ALL FILES (only top-level, no subfolders) ===
 for map_file in "$DATA_DIR"/*.nii.gz; do
@@ -52,8 +63,8 @@ for map_file in "$DATA_DIR"/*.nii.gz; do
   fi
 
   # === CONFIGURATION dépendante du groupe ===
-  TEMPLATE="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/${group}/templateSyN_Allen/0.1/template/RARE_template_template0.nii.gz"
-  TRANSFORM_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE/${group}/templateSyN_Allen/0.1/template"
+  TEMPLATE="$BRAIN_EXTRACTED_DIR/RARE/${group}/templateSyN_Allen/0.1/template/RARE_template_template0.nii.gz"
+  TRANSFORM_DIR="$BRAIN_EXTRACTED_DIR/RARE/${group}/templateSyN_Allen/0.1/template"
 
   # Créer le bon dossier de sortie
   OUTPUT_DIR="${OUTPUT_BASE}/${group}"

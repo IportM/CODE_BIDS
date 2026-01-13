@@ -56,8 +56,13 @@ const FC3R_CONFIG = Dict(
 # Convenience helpers
 bids_root() = joinpath(FC3R_CONFIG[:project_root], "BIDS")
 rare_library_tsv_path() = joinpath(pwd(), "rare_library.tsv")
-python_dir() = joinpath(FC3R_CONFIG[:project_root], "python")
-bash_dir() = joinpath(FC3R_CONFIG[:project_root], "scr")
+# python_dir() = joinpath(FC3R_CONFIG[:project_root], "python")
+# bash_dir() = joinpath(FC3R_CONFIG[:project_root], "scr")
+scripts_root() = joinpath(FC3R_CONFIG[:project_root], "scr")
+
+# Ex: step = "01_BIDS", "02_reco", ...
+step_path(step::AbstractString, file::AbstractString) = joinpath(scripts_root(), step, file)
+
 
 # =====================================================================
 # PART 1 – Raw Bruker → TSV metadata (sessions, methods, etc.)
@@ -343,7 +348,7 @@ function reconstruct_MP2RAGE_series(bruker_path::String,
         niwrite(out_nii, ni)
     end
 
-    python_script = joinpath(python_dir(), "Parser_Bruker_file.py")
+    python_script = step_path("01_BIDS", "Parser_Bruker_file.py")
     cmd = `$(FC3R_CONFIG[:python_bin]) $python_script $bruker_path $anat_dir --mp2_file $mp2_file --json_name "$(subject_name)_$(session_name)_$(current_method).json"`
     run(cmd)
 
@@ -369,7 +374,7 @@ function reconstruct_MESE_series(bruker_path::String,
     cmd = `julia -t auto --project=reconstruction_MESE reconstruction_MESE/main_MESE.jl $bruker_path $mese_out`
     run(cmd)
 
-    python_script = joinpath(python_dir(), "Parser_Bruker_file.py")
+    python_script = step_path("01_BIDS", "Parser_Bruker_file.py")
     cmd2 = `$(FC3R_CONFIG[:python_bin]) $python_script $bruker_path $anat_dir --mode MESE --json_name "$(subject_name)_$(session_name)_$(current_method).json"`
     run(cmd2)
 
@@ -393,8 +398,8 @@ function reconstruct_RARE_series(bruker_path::String,
     brkraw_dir = dirname(bruker_path)
     s_value = lpad(parse(Int, basename(bruker_path)), 3, '0')
 
-    python_script = "Brkraw_RARE.py"  # as in original code (relative, no joinpath)
-    cmd = `python3 $python_script $brkraw_dir $s_value $anat_dir "$(subject_name)_$(session_name)_$(current_method).nii.gz"`
+    python_script = step_path("02_reco", "Brkraw_RARE.py")  # as in original code (relative, no joinpath)
+    cmd = `$(FC3R_CONFIG[:python_bin]) $python_script $brkraw_dir $s_value $anat_dir "$(subject_name)_$(session_name)_$(current_method).nii.gz"`
     run(cmd)
 
     rare_output_path = joinpath(anat_dir, "$(subject_name)_$(session_name)_$(current_method).nii.gz")
@@ -402,7 +407,7 @@ function reconstruct_RARE_series(bruker_path::String,
     id_key = "$(subject_name)_$(session_name)"
     rare_library[id_key] = rare_output_path
 
-    parser_script = joinpath(python_dir(), "Parser_Bruker_file.py")
+    parser_script = step_path("01_BIDS", "Parser_Bruker_file.py")
     cmd2 = `$(FC3R_CONFIG[:python_bin]) $parser_script $bruker_path $anat_dir --mode RARE --json_name "$(subject_name)_$(session_name)_$(current_method).json"`
     run(cmd2)
 
@@ -655,8 +660,8 @@ function apply_masks_to_quantitative_maps()
         end
 
         # ORIGINAL BEHAVIOR: use script "mask_aaply.py" and hard-coded python bin
-        python_script = "mask_aaply.py"
-        command = `/workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/python3 $python_script --mask $mask_path --acq $acq_path --output $output_path`
+        python_script = step_path("03_masks", "mask_aaply.py")
+        command = `$(FC3R_CONFIG[:python_bin]) $python_script --mask $mask_path --acq $acq_path --output $output_path`
         println("🧠 Applying mask to: $filename → $modality_folder")
         run(command)
         println("🕒 Mask application time: $(time() - local_start) seconds")
@@ -795,9 +800,9 @@ function reconstruct_T2star(df::DataFrame)
                 copy_T2 = joinpath(brain_t2star_dir, filename_T2_masked)
                 niwrite(copy_T2, NIVolume(T2star))
 
-                parser_script = joinpath(python_dir(), "Parser_Bruker_file.py")
-                run(`python3 $parser_script $(df[i, :Filepath]) $anat_dir --mode T2STAR --json_name "$(prefix)_T2starmap.json"`)
-                run(`python3 $parser_script $(df[i, :Filepath]) $anat_dir --mode T2STAR --json_name "$(prefix)_R2starmap.json"`)
+                parser_script = step_path("01_BIDS", "Parser_Bruker_file.py")
+                run(`$(FC3R_CONFIG[:python_bin]) $parser_script $(df[i, :Filepath]) $anat_dir --mode T2STAR --json_name "$(prefix)_T2starmap.json"`)
+                run(`$(FC3R_CONFIG[:python_bin]) $parser_script $(df[i, :Filepath]) $anat_dir --mode T2STAR --json_name "$(prefix)_R2starmap.json"`)
 
                 println("🕒 T2* reconstruction time: $(time() - local_start) seconds")
             else
@@ -821,8 +826,8 @@ function reconstruct_angio(df::DataFrame)
     bids = bids_root()
     project_root = FC3R_CONFIG[:project_root]
     brkraw_bin = FC3R_CONFIG[:brkraw_bin]
-    angio_script = joinpath(bash_dir(), "angio.sh")
-    parser_script = joinpath(python_dir(), "Parser_Bruker_file.py")
+    angio_script = step_path("02_reco", "angio.sh")
+    parser_script = step_path("01_BIDS", "Parser_Bruker_file.py")
 
     for row in eachrow(df)
         local_start = time()
@@ -902,7 +907,7 @@ Run the Python script that masks the angiography images.
 """
 function run_angio_mask()
     local_start = time()
-    python_script = joinpath(python_dir(), "Mask_angio.py")
+    python_script = step_path("03_masks", "Mask_angio.py")
     run(`$(FC3R_CONFIG[:python_bin]) $python_script`)
     println("🕒 Angio mask time: $(time() - local_start) seconds")
 end
@@ -920,30 +925,19 @@ Run the external shell scripts that:
 function run_alignment_and_templates()
     local_start = time()
 
-    cd(bash_dir()) do
-        # Registration (SyN) + T2* thresholding
-        run(`./Find_Matrice_SyN.sh`)
-        run(`./Align_SyN.sh`)
-        run(`./Seuil_T2star.sh`)
+    run(`bash $(step_path("04_align","Find_Matrice_SyN.sh"))`)
+    run(`bash $(step_path("04_align","Align_SyN.sh"))`)
+    run(`bash $(step_path("04_align","Seuil_T2star.sh"))`)
 
-        # Build RARE templates (S01 and S02)
-        run(`./Template_v2.sh RARE S01 4`)
-        println("🕒 RARE template S01 built")
-        run(`./Template_v2.sh RARE S02 4`)
-        println("🕒 RARE template S02 built")
+    run(`bash $(step_path("05_templates","Template_v2.sh")) RARE S01 4`)
+    run(`bash $(step_path("05_templates","Template_v2.sh")) RARE S02 4`)
 
-        # Propagate modalities onto the template
-        modalities = ["T1map", "UNIT1", "T2map", "angio", "T2starmap", "QSM"]
-
-        for mod in modalities
-            run(`./apply_to_template.sh $mod`)
-        end
-
-        for mod in modalities
-            run(`./Make_Template.sh $mod`)
-        end
+    # Propagate modalities onto the template
+    for mod in ["T1map","UNIT1","T2map","angio","T2starmap","QSM"]
+        run(`bash $(step_path("05_templates","apply_to_template.sh")) $mod`)
+        run(`bash $(step_path("05_templates","Make_Template.sh")) $mod`)
     end
-
+    
     println("🕒 Alignment + template generation time: $(time() - local_start) seconds")
 end
 
@@ -968,8 +962,8 @@ function main()
     bids = bids_root()
     mkpath(bids)
     participants_tsv = joinpath(bids, "participants.tsv")
-    part_script = joinpath(python_dir(), "participants.py")
-    run(`python3 $part_script $(FC3R_CONFIG[:input_dirs]...) $participants_tsv`)
+    part_script = step_path("01_BIDS", "participants.py")
+    run(`$(FC3R_CONFIG[:python_bin]) $part_script $(FC3R_CONFIG[:input_dirs]...) $participants_tsv`)
 
     # 4) Load / init RARE library
     rare_lib = load_rare_library_tsv(rare_library_tsv_path())
@@ -978,7 +972,7 @@ function main()
     reconstruct_all_sequences(df, rare_lib)
 
     # 6) Brain extraction (Python)
-    brain_extraction_script = joinpath(python_dir(), "brain_extraction.py")
+    brain_extraction_script = step_path("03_masks", "brain_extraction.py")
     run(`$(FC3R_CONFIG[:python_bin]) $brain_extraction_script -r $bids`)
 
     # 7) Orientation fix
@@ -999,11 +993,11 @@ function main()
     run_angio_mask()
 
     # 11) Alignment + templates (RARE + all modalities incl. QSM)
-    #run_alignment_and_templates()
+    run_alignment_and_templates()
 
     println("Total reconstruction time: $(time() - global_start) seconds")
 end
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    main()
-end
+
+main()
+

@@ -2,6 +2,7 @@ import ants
 import os
 import glob
 
+
 # ✅ Dossier contenant tous les masques
 mask_dir = "/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives"
 

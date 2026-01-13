@@ -1,8 +1,20 @@
 #!/bin/bash
 source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
+
 # Dossier contenant les images
-INPUT_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/T2starmap/alignedSyN_Allen"   # <-- change ce chemin si nécessaire
-OUTPUT_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/T2starmap/alignedSyN_Allen/seuil"
+INPUT_DIR="$BRAIN_EXTRACTED_DIR/T2starmap/alignedSyN_Allen"   # <-- change ce chemin si nécessaire
+OUTPUT_DIR="$BRAIN_EXTRACTED_DIR/T2starmap/alignedSyN_Allen/seuil"
 
 # Crée le dossier de sortie s'il n'existe pas
 mkdir -p "$OUTPUT_DIR"

@@ -2,8 +2,20 @@
 source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 set -euo pipefail
 
+
+# Où se trouve ce script (chemin absolu)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Project root = 2 niveaux au-dessus (car scr/XX/)
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Dossiers “standards” produits par ton pipeline
+BIDS_DIR="${BIDS_DIR:-$PROJECT_ROOT/BIDS}"
+DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
+BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
+
 # Dossier contenant les images à enregistrer
-DATA_DIR="/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted/RARE"
+DATA_DIR="$BRAIN_EXTRACTED_DIR/RARE"
 
 # Références par groupe de sessions
 REF_IMG_SES_1_2="${DATA_DIR}/sub-01_ses-1_RARE_brain_extracted.nii.gz"
