@@ -1,5 +1,5 @@
 #!/bin/bash
-source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+# source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 
 # Où se trouve ce script (chemin absolu)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,4 +37,4 @@ for file in "$INPUT_DIR"/*_aligned_*.nii*; do
 done
 
 echo "Terminé. Images enregistrées dans : $OUTPUT_DIR"
-deactivate
+# deactivate

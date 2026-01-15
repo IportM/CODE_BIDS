@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 shopt -s nullglob
-source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+# source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 
 contrast=$1                    # ex: T1map
 session_group=${2:-S01}        # paramètre S01, S02 ou S03 (défaut : S01)
@@ -40,7 +40,7 @@ DERIV_DIR="${DERIV_DIR:-$BIDS_DIR/derivatives}"
 BRAIN_EXTRACTED_DIR="${BRAIN_EXTRACTED_DIR:-$DERIV_DIR/Brain_extracted}"
 
 # Répertoires de base
-ORIG_IMG_DIR="$BRAIN_EXTRACTED_DIR/${contrast}/alignedSyn"
+ORIG_IMG_DIR="$BRAIN_EXTRACTED_DIR/${contrast}/alignedSyN"
 TEMPLATE_BASE="$BRAIN_EXTRACTED_DIR/${contrast}/${session_group}/templateSyN"
 
 # ➤ Vérification si le template final (résolution 0.1) existe déjà
@@ -48,7 +48,7 @@ FINAL_TEMPLATE="${TEMPLATE_BASE}/0.1/template/${contrast}_template_template0.nii
 if [[ -f "$FINAL_TEMPLATE" ]]; then
   echo "✅ Le template final existe déjà : $FINAL_TEMPLATE"
   echo "⏩ Le script ne sera pas relancé."
-  deactivate
+  # deactivate
   exit 0
 fi
 
@@ -60,7 +60,7 @@ REF_TEMPLATE=""
 
 for res in "${resolutions[@]}"; do
   echo "=== ➤ Résolution ${res}mm ==="
-  
+
   RESAMPLED_DIR="${TEMPLATE_BASE}/${res}/resampled"
   TEMPLATE_OUT="${TEMPLATE_BASE}/${res}/template"
   mkdir -p "$RESAMPLED_DIR" "$TEMPLATE_OUT"
@@ -180,4 +180,4 @@ for res in "${resolutions[@]}"; do
 done
 
 echo "✅ Templates multi-échelles terminés."
-deactivate
+# deactivate

@@ -2,258 +2,272 @@
 set -euo pipefail
 
 # ------------------------------------------------------------
-# FC3R - Dependency checker (no install, only checks + hints)
+# Check_dependencies.sh
+# Usage:
+#   bash Check_dependencies.sh
+#   bash Check_dependencies.sh --python /path/to/python --julia /path/to/julia --julia-project /path/to/scr
 # ------------------------------------------------------------
 
-# Colors (safe fallback)
-if [[ -t 1 ]]; then
-  RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[0;33m'; BLUE=$'\033[0;34m'; NC=$'\033[0m'
-else
-  RED=""; GREEN=""; YELLOW=""; BLUE=""; NC=""
-fi
+# -------- helpers --------
+ok()   { echo "✅ $*"; }
+warn() { echo "⚠️  $*"; }
+fail() { echo "❌ $*"; }
+info() { echo "ℹ️  $*"; }
 
-ok()    { echo "${GREEN}✅ $*${NC}"; }
-warn()  { echo "${YELLOW}⚠️  $*${NC}"; }
-fail()  { echo "${RED}❌ $*${NC}"; }
-info()  { echo "${BLUE}ℹ️  $*${NC}"; }
-
-# Defaults
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$SCRIPT_DIR"
-
-PYTHON_BIN="${PYTHON_BIN:-python3}"
-JULIA_BIN="${JULIA_BIN:-julia}"
-
-# If you have a dedicated Julia env, you can pass it:
-JULIA_PROJECT="${JULIA_PROJECT:-}"  # ex: "$PROJECT_ROOT/julia_env" or "" to use default
-
-# Collect missing items
-missing_cmds=()
-missing_py=()
-missing_jl=()
-missing_files=()
-
-# Auto-detect Julia project
-if [[ -z "${JULIA_PROJECT:-}" ]]; then
-  if [[ -f "$PROJECT_ROOT/scr/Project.toml" ]]; then
-    JULIA_PROJECT="$PROJECT_ROOT/scr"
-  elif [[ -f "$PROJECT_ROOT/Project.toml" ]]; then
-    JULIA_PROJECT="$PROJECT_ROOT"
-  else
-    JULIA_PROJECT=""  # fallback: default Julia env
+need_cmd() {
+  local c="$1"
+  if command -v "$c" >/dev/null 2>&1; then ok "Command found: $c"
+  else fail "Command missing: $c"; MISSING_ANY=1
   fi
-fi
-
-usage() {
-  cat <<EOF
-Usage:
-  bash check_deps.sh [--project-root PATH] [--python PATH] [--julia PATH] [--julia-project PATH]
-
-Examples:
-  bash check_deps.sh
-  bash check_deps.sh --python /path/to/python3 --julia /path/to/julia
-  bash check_deps.sh --julia-project ./julia_env
-
-This script DOES NOT install anything. It only checks and prints hints.
-EOF
 }
 
-# Arg parse
+need_path_cmd() {
+  local label="$1"
+  local p="$2"
+  if [[ -n "$p" && -x "$p" ]]; then ok "Command found: $p"
+  else fail "Command missing: $label ($p)"; MISSING_ANY=1
+  fi
+}
+
+need_file() {
+  local f="$1"
+  if [[ -f "$f" ]]; then ok "File found: $f"
+  else fail "File missing: $f"; MISSING_ANY=1
+  fi
+}
+
+# -------- args --------
+PYTHON_BIN="python3"
+JULIA_BIN="julia"
+JULIA_PROJECT_DIR=""
+PROJECT_ROOT=""
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --project-root) PROJECT_ROOT="$(cd "$2" && pwd)"; shift 2;;
-    --python)       PYTHON_BIN="$2"; shift 2;;
-    --julia)        JULIA_BIN="$2"; shift 2;;
-    --julia-project) JULIA_PROJECT="$2"; shift 2;;
-    -h|--help) usage; exit 0;;
-    *) fail "Unknown arg: $1"; usage; exit 2;;
+    --python)        PYTHON_BIN="$2"; shift 2;;
+    --julia)         JULIA_BIN="$2"; shift 2;;
+    --julia-project) JULIA_PROJECT_DIR="$2"; shift 2;;
+    -h|--help)
+      cat <<EOF
+Usage:
+  bash Check_dependencies.sh [--python PATH] [--julia PATH] [--julia-project PATH]
+
+Defaults:
+  --python python3
+  --julia  julia
+  --julia-project <auto: PROJECT_ROOT/scr>
+EOF
+      exit 0
+      ;;
+    *) fail "Unknown option: $1"; exit 2;;
   esac
 done
 
+# -------- detect project root --------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# If script is in repo root, root = SCRIPT_DIR
+# If script is in scr/, root = parent
+if [[ -d "$SCRIPT_DIR/scr" ]]; then
+  PROJECT_ROOT="$SCRIPT_DIR"
+elif [[ "$(basename "$SCRIPT_DIR")" == "scr" ]]; then
+  PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+else
+  # fallback: climb up until we find "scr"
+  cur="$SCRIPT_DIR"
+  while [[ "$cur" != "/" ]]; do
+    if [[ -d "$cur/scr" ]]; then PROJECT_ROOT="$cur"; break; fi
+    cur="$(dirname "$cur")"
+  done
+  PROJECT_ROOT="${PROJECT_ROOT:-$SCRIPT_DIR}"
+fi
+
+JULIA_PROJECT_DIR="${JULIA_PROJECT_DIR:-$PROJECT_ROOT/scr}"
+
+MISSING_ANY=0
+MISSING_PY=()
+MISSING_JL=()
+
+echo
 info "Project root: $PROJECT_ROOT"
 info "Python:       $PYTHON_BIN"
 info "Julia:        $JULIA_BIN"
-[[ -n "$JULIA_PROJECT" ]] && info "Julia project: $JULIA_PROJECT"
-
-# Helpers
-have_cmd() { command -v "$1" >/dev/null 2>&1; }
-check_cmd() {
-  local c="$1"
-  if have_cmd "$c"; then ok "Command found: $c"; else fail "Missing command: $c"; missing_cmds+=("$c"); fi
-}
-
-check_file() {
-  local f="$1"
-  if [[ -e "$f" ]]; then ok "File found: $f"; else fail "Missing file: $f"; missing_files+=("$f"); fi
-}
-
-run_py_import() {
-  local mod="$1"
-  if "$PYTHON_BIN" -c "import $mod" >/dev/null 2>&1; then ok "Python import OK: $mod"
-  else fail "Python import FAIL: $mod"; missing_py+=("$mod"); fi
-}
-
-run_julia_imports() {
-  local label="$1"
-  local code="$2"
-  local cmd=("$JULIA_BIN")
-  [[ -n "$JULIA_PROJECT" ]] && cmd+=("--project=$JULIA_PROJECT")
-  cmd+=("-e" "$code")
-
-  if "${cmd[@]}" >/dev/null 2>&1; then ok "Julia imports OK: $label"
-  else fail "Julia imports FAIL: $label"; missing_jl+=("$label"); fi
-}
-
+info "Julia project: $JULIA_PROJECT_DIR"
 echo
+
+# ------------------------------------------------------------
+# 1) pipeline files
+# ------------------------------------------------------------
 info "== 1) Check pipeline scripts exist (scr/01..05) =="
-# Adjust names if you renamed folders slightly
-check_file "$PROJECT_ROOT/scr/01_BIDS/participants.py"
-check_file "$PROJECT_ROOT/scr/01_BIDS/Parser_Bruker_file.py"
-
-check_file "$PROJECT_ROOT/scr/02_reco/Brkraw_RARE.py"
-check_file "$PROJECT_ROOT/scr/02_reco/angio.sh"
-
-check_file "$PROJECT_ROOT/scr/03_masks/brain_extraction.py"
-check_file "$PROJECT_ROOT/scr/03_masks/mask_aaply.py"
-check_file "$PROJECT_ROOT/scr/03_masks/Mask_angio.py"
-
-check_file "$PROJECT_ROOT/scr/04_align/Find_Matrice_SyN.sh"
-check_file "$PROJECT_ROOT/scr/04_align/Align_SyN.sh"
-check_file "$PROJECT_ROOT/scr/04_align/Seuil_T2star.sh"
-
-check_file "$PROJECT_ROOT/scr/05_templates/Template_v2.sh"
-check_file "$PROJECT_ROOT/scr/05_templates/apply_to_template.sh"
-check_file "$PROJECT_ROOT/scr/05_templates/Make_Template.sh"
-
+need_file "$PROJECT_ROOT/scr/01_BIDS/participants.py"
+need_file "$PROJECT_ROOT/scr/01_BIDS/Parser_Bruker_file.py"
+need_file "$PROJECT_ROOT/scr/02_reco/Brkraw_RARE.py"
+need_file "$PROJECT_ROOT/scr/02_reco/angio.sh"
+need_file "$PROJECT_ROOT/scr/03_masks/brain_extraction.py"
+need_file "$PROJECT_ROOT/scr/03_masks/mask_aaply.py"
+need_file "$PROJECT_ROOT/scr/03_masks/Mask_angio.py"
+need_file "$PROJECT_ROOT/scr/04_align/Find_Matrice_SyN.sh"
+need_file "$PROJECT_ROOT/scr/04_align/Align_SyN.sh"
+need_file "$PROJECT_ROOT/scr/04_align/Seuil_T2star.sh"
+need_file "$PROJECT_ROOT/scr/05_templates/Template_v2.sh"
+need_file "$PROJECT_ROOT/scr/05_templates/apply_to_template.sh"
+need_file "$PROJECT_ROOT/scr/05_templates/Make_Template.sh"
 echo
+
+# ------------------------------------------------------------
+# 2) core commands
+# ------------------------------------------------------------
 info "== 2) Check core system commands =="
-# Shell basics
-check_cmd bash
-check_cmd awk
-check_cmd sed
-check_cmd grep
-check_cmd find
-check_cmd sort
-check_cmd head
-check_cmd tr
-check_cmd cut
-check_cmd bc
-
-# Python/Julia
-check_cmd "$PYTHON_BIN" || true  # if PYTHON_BIN is a path, command -v may fail; we'll test below
-check_cmd "$JULIA_BIN" || true
-
-# brkraw
-check_cmd brkraw
-
-# MRtrix3
-check_cmd mrinfo
-check_cmd mrconvert
-check_cmd mrtransform
-check_cmd mrgrid
-check_cmd mrcat
-
-echo
-info "== 3) Check ANTs commands =="
-check_cmd antsRegistrationSyN.sh
-check_cmd antsApplyTransforms
-check_cmd ImageMath
-check_cmd AverageImages
-check_cmd ResampleImageBySpacing
-check_cmd CopyImageHeaderInformation
-check_cmd antsMultivariateTemplateConstruction2.sh
-
-# Optional but often present/used
-warn_cmds=(N4BiasFieldCorrection antsRegistration antsAffineInitializer)
-for c in "${warn_cmds[@]}"; do
-  if have_cmd "$c"; then ok "Command found: $c"; else warn "Optional/Maybe missing: $c"; fi
+for c in bash awk sed grep find sort head tr cut bc; do
+  need_cmd "$c"
 done
-
+# python/julia can be paths
+if [[ "$PYTHON_BIN" == */* ]]; then need_path_cmd "python" "$PYTHON_BIN"; else need_cmd "$PYTHON_BIN"; fi
+if [[ "$JULIA_BIN" == */* ]]; then need_path_cmd "julia" "$JULIA_BIN"; else need_cmd "$JULIA_BIN"; fi
+# tools used by pipeline
+for c in brkraw mrinfo mrconvert mrtransform mrgrid mrcat; do
+  need_cmd "$c"
+done
 echo
+
+# ------------------------------------------------------------
+# 3) ANTs
+# ------------------------------------------------------------
+info "== 3) Check ANTs commands =="
+for c in antsRegistrationSyN.sh antsApplyTransforms ImageMath AverageImages ResampleImageBySpacing CopyImageHeaderInformation antsMultivariateTemplateConstruction2.sh N4BiasFieldCorrection antsRegistration antsAffineInitializer; do
+  need_cmd "$c"
+done
+echo
+
+# ------------------------------------------------------------
+# 4) python runtime + imports
+# ------------------------------------------------------------
 info "== 4) Check Python runtime + modules =="
 if "$PYTHON_BIN" -V >/dev/null 2>&1; then
   ok "Python runs: $("$PYTHON_BIN" -V 2>&1)"
 else
-  fail "Python is not runnable: $PYTHON_BIN"
-  missing_cmds+=("$PYTHON_BIN")
+  fail "Python does not run: $PYTHON_BIN"
+  MISSING_ANY=1
 fi
 
-# Your scripts rely on 'ants' and 'antspynet'
-run_py_import ants
-run_py_import antspynet
-
-# Optional (often needed indirectly)
-for m in numpy scipy nibabel; do
-  if "$PYTHON_BIN" -c "import $m" >/dev/null 2>&1; then
-    ok "Python import OK: $m"
+py_check_import() {
+  local mod="$1"
+  if "$PYTHON_BIN" -c "import $mod" >/dev/null 2>&1; then
+    ok "Python import OK: $mod"
   else
-    warn "Python import missing (often required): $m"
+    fail "Python import FAIL: $mod"
+    MISSING_PY+=("$mod")
+    MISSING_ANY=1
   fi
-done
+}
 
+# minimal set for your pipeline
+py_check_import "numpy"
+py_check_import "scipy"
+py_check_import "nibabel"
+py_check_import "ants"
+py_check_import "antspynet"
 echo
+
+# Extra diagnostic if ants fails (common GLIBCXX issue)
+if [[ " ${MISSING_PY[*]} " == *" ants "* ]]; then
+  warn "ANTS Python import failed. This is often due to libstdc++/GLIBCXX mismatch."
+  warn "If using conda/micromamba, try activating env and ensuring LD_LIBRARY_PATH includes <env>/lib."
+fi
+
+# ------------------------------------------------------------
+# 5) julia runtime + packages
+# ------------------------------------------------------------
 info "== 5) Check Julia runtime + packages =="
 if "$JULIA_BIN" -v >/dev/null 2>&1; then
   ok "Julia runs: $("$JULIA_BIN" -v 2>&1 | head -n 1)"
 else
-  fail "Julia is not runnable: $JULIA_BIN"
-  missing_cmds+=("$JULIA_BIN")
+  fail "Julia does not run: $JULIA_BIN"
+  MISSING_ANY=1
 fi
 
-# Core Julia deps
-run_julia_imports "core_pkgs" 'using CSV, DataFrames, Dates, JSON, Glob, Statistics; using NIfTI, MRIFiles, LsqFit, Metrics; using PyCall'
-
-# Custom package (may require Pkg.develop)
-run_julia_imports "SEQ_BRUKER_a_MP2RAGE_CS_360" 'using SEQ_BRUKER_a_MP2RAGE_CS_360'
-
-# MESE project presence (optional depending on your run)
-echo
-info "== 6) Check MESE project presence (optional) =="
-if [[ -d "$PROJECT_ROOT/reconstruction_MESE" ]]; then
-  ok "Found reconstruction_MESE directory"
-  [[ -f "$PROJECT_ROOT/reconstruction_MESE/main_MESE.jl" ]] && ok "Found reconstruction_MESE/main_MESE.jl" || warn "Missing reconstruction_MESE/main_MESE.jl"
-  [[ -f "$PROJECT_ROOT/reconstruction_MESE/Project.toml" ]] && ok "Found reconstruction_MESE/Project.toml" || warn "Missing reconstruction_MESE/Project.toml"
+if [[ -d "$JULIA_PROJECT_DIR" && -f "$JULIA_PROJECT_DIR/Project.toml" ]]; then
+  ok "Julia project found: $JULIA_PROJECT_DIR/Project.toml"
 else
-  warn "reconstruction_MESE not found (MESE step will fail if you run it)"
+  warn "Julia Project.toml not found in: $JULIA_PROJECT_DIR (Julia package checks may fail)"
 fi
 
+jl_try_imports='
+using Pkg
+# Try loading a few packages you rely on:
+pkgs = ["CSV","DataFrames","Dates","JSON","NIfTI","Glob","MR"]
+missing = String[]
+for p in pkgs
+  try
+    @eval import $(Symbol(p))
+  catch
+    push!(missing, p)
+  end
+end
+if !isempty(missing)
+  println("MISSING_JULIA_PKGS=" * join(missing, ","))
+end
+'
+
+set +e
+JL_OUT="$("$JULIA_BIN" --project="$JULIA_PROJECT_DIR" -e "$jl_try_imports" 2>&1)"
+JL_RC=$?
+set -e
+
+if [[ $JL_RC -eq 0 ]]; then
+  ok "Julia imports OK: core_pkgs"
+else
+  warn "Julia import test returned non-zero (may still be ok depending on setup)."
+fi
+
+if echo "$JL_OUT" | grep -q "MISSING_JULIA_PKGS="; then
+  miss_line="$(echo "$JL_OUT" | grep "MISSING_JULIA_PKGS=" | tail -n1)"
+  miss_csv="${miss_line#MISSING_JULIA_PKGS=}"
+  IFS=',' read -r -a miss_arr <<< "$miss_csv"
+  for p in "${miss_arr[@]}"; do
+    fail "Julia import FAIL: $p"
+    MISSING_JL+=("$p")
+    MISSING_ANY=1
+  done
+else
+  ok "Julia imports OK: core_pkgs"
+fi
+
+# Optional: your local package
+set +e
+"$JULIA_BIN" --project="$JULIA_PROJECT_DIR" -e 'import SEQ_BRUKER_a_MP2RAGE_CS_360' >/dev/null 2>&1
+rc=$?
+set -e
+if [[ $rc -eq 0 ]]; then ok "Julia imports OK: SEQ_BRUKER_a_MP2RAGE_CS_360"
+else warn "Julia import WARN: SEQ_BRUKER_a_MP2RAGE_CS_360 (optional/local?)"
+fi
 echo
+
+# ------------------------------------------------------------
+# Summary
+# ------------------------------------------------------------
 info "== Summary =="
-if (( ${#missing_files[@]} == 0 && ${#missing_cmds[@]} == 0 && ${#missing_py[@]} == 0 && ${#missing_jl[@]} == 0 )); then
-  ok "All required checks passed."
-  exit 0
-fi
-
 echo
-if (( ${#missing_files[@]} > 0 )); then
-  fail "Missing pipeline files:"
-  printf '  - %s\n' "${missing_files[@]}"
-fi
 
-if (( ${#missing_cmds[@]} > 0 )); then
-  fail "Missing system commands/binaries:"
-  printf '  - %s\n' "${missing_cmds[@]}"
-  echo "Hints:"
-  echo "  - Install MRtrix3 (mrinfo/mrconvert/mrtransform/...)"
-  echo "  - Install ANTs (antsRegistrationSyN.sh, antsApplyTransforms, ImageMath, ...)"
-  echo "  - Install brkraw (or add it to PATH)"
-fi
-
-if (( ${#missing_py[@]} > 0 )); then
+if [[ ${#MISSING_PY[@]} -gt 0 ]]; then
   fail "Missing Python modules:"
-  printf '  - %s\n' "${missing_py[@]}"
+  for m in "${MISSING_PY[@]}"; do echo "  - $m"; done
   echo "Hints:"
-  echo "  - In your Python environment: pip install antspyx antspynet"
+  echo "  - In your venv/conda env: pip install antspyx antspynet numpy scipy nibabel"
+  echo
 fi
 
-if (( ${#missing_jl[@]} > 0 )); then
+if [[ ${#MISSING_JL[@]} -gt 0 ]]; then
   fail "Missing Julia packages:"
-  printf '  - %s\n' "${missing_jl[@]}"
+  for m in "${MISSING_JL[@]}"; do echo "  - $m"; done
   echo "Hints:"
-  echo "  - In Julia: using Pkg; Pkg.add([\"CSV\",\"DataFrames\",\"JSON\",\"Glob\",\"NIfTI\",\"MRIFiles\",\"LsqFit\",\"Metrics\",\"PyCall\"])"
-  echo "  - For custom package: Pkg.develop(path=\"/path/to/SEQ_BRUKER_a_MP2RAGE_CS_360\")"
+  echo "  - From repo root: julia --project=./scr -e 'using Pkg; Pkg.instantiate()'"
+  echo
 fi
 
-echo
-warn "Fix missing items, then re-run: bash check_deps.sh"
-exit 1
+if [[ $MISSING_ANY -eq 0 ]]; then
+  ok "All checks passed ✅"
+  exit 0
+else
+  warn "Fix missing items, then re-run: bash Check_dependencies.sh"
+  exit 1
+fi

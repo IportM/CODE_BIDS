@@ -2,7 +2,7 @@
 
 # Activation de FSL
 # source /home/CODE/fsl/bin/activate  # Remplace par source /etc/fsl/fsl.sh si besoin
-source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+# source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 
 set -euo pipefail
 
@@ -155,4 +155,4 @@ find "$BRAIN_DIR" \
 done
 
 echo "=== Alignement terminé ==="
-deactivate
+# deactivate

@@ -1,5 +1,5 @@
 #!/bin/bash
-source /home/CODE/fsl/bin/activate
+# source /home/CODE/fsl/bin/activate
 
 INPUT_ANGIO1="$1"
 INPUT_ANGIO2="$2"

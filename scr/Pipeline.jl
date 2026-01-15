@@ -25,6 +25,7 @@ import Base.Filesystem: mkpath, isfile, touch
 # Configuration
 # ---------------------------------------------------------------------
 
+const PROJECT_ROOT = abspath(joinpath(@__DIR__, ".."))
 """
 Global configuration for the FC3R reconstruction pipeline.
 
@@ -32,6 +33,7 @@ Adjust these paths for your environment. For publication / sharing, the
 idea is that users only have to edit this section.
 """
 const FC3R_CONFIG = Dict(
+
     # Root raw data directories (Bruker directories grouped by S01/S02/S03)
     :input_dirs => [
         "/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/DATA/S01",
@@ -40,7 +42,7 @@ const FC3R_CONFIG = Dict(
     ],
 
     # Project root (used to build BIDS root, scripts paths, etc.)
-    :project_root => dirname(@__DIR__),
+    :project_root => PROJECT_ROOT,
 
     # Python executable to use for most neuroimaging scripts
     # You can use the ./install.sh to crete an venv with everything needed
@@ -51,7 +53,7 @@ const FC3R_CONFIG = Dict(
 
     # Output location for derived Brain_extracted maps (T1/T2/UNIT1/T2*)
     :brain_extracted_root =>
-        "/workspace_QMRI/PROJECTS_DATA/2024_RECH_FC3R/CODE_BIDS/BIDS/derivatives/Brain_extracted",
+        joinpath(PROJECT_ROOT, "BIDS","derivatives", "Brain_extracted"),
 )
 
 # Convenience helpers
@@ -1004,4 +1006,3 @@ end
 
 
 main()
-

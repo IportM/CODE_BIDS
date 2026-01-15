@@ -27,3 +27,4 @@
 .env_fc3r
 .env_fc3r/bin
 
+.julia_depot/

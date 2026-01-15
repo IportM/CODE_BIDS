@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+# source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 set -euo pipefail
 
 # ─────────────────────────────────────────────
@@ -98,4 +98,4 @@ for IMG in "${DATA_DIR}"/*.nii*; do
 done
 
 echo "✅ Terminé : toutes les souris sont alignées sur le template Allen (${ALLEN_ID})."
-deactivate
+# deactivate

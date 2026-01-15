@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+# source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 set -euo pipefail
 
 # Où se trouve ce script (chemin absolu)
@@ -105,4 +105,4 @@ for IMG in "${DATA_DIR}"/*.nii*; do
 done
 
 echo "✅ Terminé : alignements faits, matrices/champs conservés dans ${REG_DIR}."
-deactivate
+# deactivate

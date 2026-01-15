@@ -22,13 +22,13 @@ MODALITY="$1"
 
 # Dossier d'entrée : cas particulier pour T2starmap
 if [ "$MODALITY" == "T2starmap" ]; then
-  DATA_DIR="$BRAIN_EXTRACTED_DIR/T2starmap/alignedSyN_Allen/seuil"
+  DATA_DIR="$BRAIN_EXTRACTED_DIR/T2starmap/alignedSyN/seuil"
 else
-  DATA_DIR="$BRAIN_EXTRACTED_DIR/${MODALITY}/alignedSyN_Allen"
+  DATA_DIR="$BRAIN_EXTRACTED_DIR/${MODALITY}/alignedSyN"
 fi
 
 # Dossier racine de sortie
-OUTPUT_BASE="$BRAIN_EXTRACTED_DIR/${MODALITY}/To_Template/SyN_Allen"
+OUTPUT_BASE="$BRAIN_EXTRACTED_DIR/${MODALITY}/To_Template/SyN"
 
 # === LOOP THROUGH ALL FILES (only top-level, no subfolders) ===
 for map_file in "$DATA_DIR"/*.nii.gz; do
@@ -63,8 +63,8 @@ for map_file in "$DATA_DIR"/*.nii.gz; do
   fi
 
   # === CONFIGURATION dépendante du groupe ===
-  TEMPLATE="$BRAIN_EXTRACTED_DIR/RARE/${group}/templateSyN_Allen/0.1/template/RARE_template_template0.nii.gz"
-  TRANSFORM_DIR="$BRAIN_EXTRACTED_DIR/RARE/${group}/templateSyN_Allen/0.1/template"
+  TEMPLATE="$BRAIN_EXTRACTED_DIR/RARE/${group}/templateSyN/0.1/template/RARE_template_template0.nii.gz"
+  TRANSFORM_DIR="$BRAIN_EXTRACTED_DIR/RARE/${group}/templateSyN/0.1/template"
 
   # Créer le bon dossier de sortie
   OUTPUT_DIR="${OUTPUT_BASE}/${group}"

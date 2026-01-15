@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+# source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 set -euo pipefail
 
 # ─────────────────────────────────────────────
@@ -125,4 +125,4 @@ find "$BRAIN_DIR" \
 done
 
 echo "=== Alignement terminé (toutes modalités en espace Allen) ==="
-deactivate
+# deactivate

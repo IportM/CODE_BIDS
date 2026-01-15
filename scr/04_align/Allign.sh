@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
+# source /workspace_QMRI/USERS_CODE/mpetit/AntsPyEnv/bin/activate
 set -euo pipefail
 
 
@@ -98,4 +98,4 @@ else
 fi
 
 echo "✅ Terminé : alignements faits, matrices conservées."
-deactivate
+# deactivate

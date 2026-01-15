@@ -1,23 +1,147 @@
-## FC3R pipeline
+# FC3R BIDS Pipeline
 
-### 1) Prérequis système (à installer manuellement)
-- ANTs (antsRegistrationSyN.sh, antsApplyTransforms, ImageMath, AverageImages, ...)
-- MRtrix3 (mrinfo, mrconvert, mrtransform, mrgrid, mrcat)
-- brkraw
-- Julia
-- Python 3
+This repository provides a pipeline to **reconstruct**, **organize into BIDS**, **create/apply masks (brain extraction)**, **perform registrations (alignment)**, and **build templates** for mouse MRI data (FC3R).
 
-### 2) Installer Python deps
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+The pipeline is organized as scripts in `scr/` (steps **01 → 05**) and uses a mix of:
+- **Bash** (orchestration, ANTs / MRtrix3)
+- **Python** (image processing, masking, utilities)
+- **Julia** (reconstruction + project-specific code)
 
-### 3) Installer Julia deps (IMPORTANT)
-julia --project=./src -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
-### 4) Vérifier que tout est OK
-./check_deps.sh 
+## Repository layout
 
-### 5) Lancer
-source .venv/bin/activate
-julia --project=./src ./src/Pipeline.jl
+Typical structure:
+- `CODE_BIDS/`
+  - `scr/`
+    - `01_BIDS/`
+    - `02_reco/`
+    - `03_masks/`
+    - `04_align/`
+    - `05_templates/`
+  - `Check_dependencies.sh`
+  - `README.md` (or `README`)
+
+
+## Expected data layout
+
+The pipeline expects (or will create) a `BIDS/` folder **at the same level as** `scr/`, including `derivatives/`.
+
+Example:
+- `CODE_BIDS/`
+  - `scr/`
+  - `BIDS/`
+    - `derivatives/`
+    - ...
+
+
+## Quick start
+
+1) Go to the project root (the folder containing `scr/` and `Check_dependencies.sh`).
+
+2) Run the dependency checker (recommended before anything else):
+   bash Check_dependencies.sh
+
+3) If you use a specific environment (HPC modules, custom paths), you can pass explicit executables:
+   bash Check_dependencies.sh --python /path/to/python --julia /path/to/julia --julia-project /path/to/CODE_BIDS/scr
+
+What the checker validates:
+- Pipeline scripts exist in `scr/01..05`
+- Basic system commands (`bash`, `awk`, `sed`, `grep`, `bc`, …)
+- MRI tools (`brkraw`, MRtrix3 commands)
+- ANTs commands (`antsRegistrationSyN.sh`, `antsApplyTransforms`, …)
+- Required Python imports (`ants`, `antspynet`, …)
+- Julia + package loading using the Julia project (`--project=./scr`)
+
+
+## Dependencies
+
+### System tools (Linux)
+Minimum required:
+- `bash`, `awk`, `sed`, `grep`, `find`, `sort`, `head`, `tr`, `cut`, `bc`
+
+### ANTs
+The pipeline uses ANTs commands, including:
+- `antsRegistrationSyN.sh`
+- `antsApplyTransforms`
+- `N4BiasFieldCorrection`
+- `antsRegistration`
+- `antsMultivariateTemplateConstruction2.sh`
+- Utilities: `ImageMath`, `AverageImages`, `ResampleImageBySpacing`, `CopyImageHeaderInformation`, …
+
+### MRtrix3
+Required commands:
+- `mrinfo`
+- `mrconvert`
+- `mrtransform`
+- `mrgrid`
+- `mrcat`
+
+### brkraw
+Used for Bruker-related operations:
+- `brkraw`
+
+### Python
+Python 3 with at least:
+- `numpy`, `scipy`, `nibabel`
+- `antspyx` (imported as `ants`)
+- `antspynet`
+
+Note: `antspynet` depends on TensorFlow. GPU is not required; CPU-only is fine.
+
+### Julia
+Julia is required for reconstruction steps and/or Julia scripts.
+
+The Julia project lives in `scr/` and should include:
+- `scr/Project.toml`
+- `scr/Manifest.toml`
+
+Standard test:
+- julia --project=./scr -e "using Pkg; Pkg.instantiate(); Pkg.precompile()"
+
+
+## Recommendation: use an isolated environment
+
+Using an isolated environment avoids conflicts with system packages and HPC modules.
+
+### Option A: Python venv (simple)
+
+Create:
+- python3 -m venv .venv_fc3r
+
+Activate:
+- source .venv_fc3r/bin/activate
+
+Install Python deps:
+- pip install -U pip setuptools wheel
+- pip install -r requirements.txt
+
+Then run:
+- bash Check_dependencies.sh
+
+### Option B: conda / micromamba (recommended on HPC)
+
+- Create a conda/micromamba environment
+- Install Python dependencies + required external tools (ANTs, MRtrix3, brkraw, Julia if needed)
+- Verify with:
+  - bash Check_dependencies.sh
+
+
+## Troubleshooting
+
+### Julia packages missing / not instantiated
+If Julia fails, run:
+- julia --project=./scr -e "using Pkg; Pkg.instantiate(); Pkg.precompile()"
+
+
+## Running the pipeline
+
+Scripts are organized by steps in `scr/01..05`. The typical order is:
+- `scr/01_BIDS/`      Create/prepare BIDS structure (participants, parsing, metadata)
+- `scr/02_reco/`      Reconstruction / conversions
+- `scr/03_masks/`     Brain extraction / apply masks
+- `scr/04_align/`     Registration / transforms (SyN)
+- `scr/05_templates/` Template construction + apply-to-template
+
+Before running:
+- Activate your environment (venv/conda/modules)
+- Make sure `Check_dependencies.sh` is fully green
